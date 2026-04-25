@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ipn.escuela_web.core.domain.Alumno;
 import com.ipn.escuela_web.features.alumno.service.IAlumnoService;
+import com.ipn.escuela_web.features.email.service.IEmailService;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -28,8 +29,11 @@ public class jcAlumno {
 
     @Autowired
     private IAlumnoService alumnoService;
+    
+    @Autowired
+    private IEmailService emailService;
 
-    // ─── GET ALL ────────────────────────────────────────────────────────────────
+    
     @GetMapping
     public ResponseEntity<?> findAll() {
 
@@ -52,7 +56,7 @@ public class jcAlumno {
         return new ResponseEntity<List<Alumno>>(alumnos, HttpStatus.OK);
     }
 
-    // ─── GET BY ID ───────────────────────────────────────────────────────────────
+   
     @GetMapping("/{id}")
     public ResponseEntity<?> findById(@PathVariable Long id) {
 
@@ -75,7 +79,6 @@ public class jcAlumno {
         return new ResponseEntity<Alumno>(alumno, HttpStatus.OK);
     }
 
-    // ─── CREATE ──────────────────────────────────────────────────────────────────
     @PostMapping
     public ResponseEntity<?> save(@RequestBody Alumno alumno) {
 
@@ -84,6 +87,14 @@ public class jcAlumno {
 
         try {
             alumnoNuevo = alumnoService.save(alumno);
+
+            // Enviar correo al alumno recién creado
+            emailService.enviarCorreo(
+                alumnoNuevo.getEmail(),
+                "Bienvenido al sistema escolar IPN",
+                "Hola " + alumnoNuevo.getNombre() + ", tu cuenta ha sido creada con éxito."
+            );
+
         } catch (DataAccessException e) {
             response.put("mensaje", "Error al insertar el alumno en la base de datos!!! :(");
             response.put("error", e.getMessage());
@@ -95,7 +106,6 @@ public class jcAlumno {
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
     }
 
-    // ─── UPDATE ──────────────────────────────────────────────────────────────────
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@RequestBody Alumno alumno, @PathVariable Long id) {
 
@@ -127,7 +137,7 @@ public class jcAlumno {
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
     }
 
-    // ─── DELETE ──────────────────────────────────────────────────────────────────
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteById(@PathVariable Long id) {
 
